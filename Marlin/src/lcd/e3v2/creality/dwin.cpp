@@ -2625,15 +2625,13 @@ void Draw_HomeOff_Menu() {
 #include "../../../libs/buzzer.h"
 
 void HMI_AudioFeedback(const bool success=true) {
-  #if HAS_BUZZER
-    if (success) {
-      buzzer.tone(100, 659);
-      buzzer.tone(10, 0);
-      buzzer.tone(100, 698);
-    }
-    else
-      buzzer.tone(40, 440);
-  #endif
+  if (success) {
+    BUZZ(100, 659);
+    BUZZ(10, 0);
+    BUZZ(100, 698);
+  }
+  else
+    BUZZ(40, 440);
 }
 
 // Prepare
@@ -2728,7 +2726,7 @@ void HMI_Prepare() {
             EncoderRate.enabled = true;
           #else
             // Apply workspace offset, making the current position 0,0,0
-            queue.inject(F("G92 X0 Y0 Z0"));
+            queue.inject(F("G92X0Y0Z0"));
             HMI_AudioFeedback();
           #endif
           break;
@@ -3556,9 +3554,9 @@ void HMI_AdvSet() {
         case ADVSET_CASE_HOMEOFF:
           checkkey = HomeOff;
           select_item.reset();
-          HMI_ValueStruct.Home_OffX_scaled = home_offset[X_AXIS] * 10;
-          HMI_ValueStruct.Home_OffY_scaled = home_offset[Y_AXIS] * 10;
-          HMI_ValueStruct.Home_OffZ_scaled = home_offset[Z_AXIS] * 10;
+          HMI_ValueStruct.Home_OffX_scaled = home_offset.x * 10;
+          HMI_ValueStruct.Home_OffY_scaled = home_offset.y * 10;
+          HMI_ValueStruct.Home_OffZ_scaled = home_offset.z * 10;
           Draw_HomeOff_Menu();
           break;
       #endif
@@ -3806,7 +3804,7 @@ void HMI_Tune() {
             EncoderRate.enabled = true;
           #else
             // Apply workspace offset, making the current position 0,0,0
-            queue.inject(F("G92 X0 Y0 Z0"));
+            queue.inject(F("G92X0Y0Z0"));
             HMI_AudioFeedback();
           #endif
         break;
@@ -4307,9 +4305,13 @@ void DWIN_StatusChanged(const char * const cstr/*=nullptr*/) {
 }
 
 void DWIN_StatusChanged(FSTR_P const fstr) {
-  char str[strlen_P(FTOP(fstr)) + 1];
-  strcpy_P(str, FTOP(fstr));
-  DWIN_StatusChanged(str);
+  #ifdef __AVR__
+    char str[strlen_P(FTOP(fstr)) + 1];
+    strcpy_P(str, FTOP(fstr));
+    DWIN_StatusChanged(str);
+  #else
+    DWIN_StatusChanged(FTOP(fstr));
+  #endif
 }
 
 #endif // DWIN_CREALITY_LCD
